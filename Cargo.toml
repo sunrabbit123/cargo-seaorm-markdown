@@ -1,0 +1,9 @@
+[package]
+name = "cargo-seaorm-markdown"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.15", features = ["derive"] }
+syn = { version = "2.0.74", features = ["full", "extra-traits"] }
+walkdir = "2.5.0"
