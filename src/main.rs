@@ -1,4 +1,3 @@
-use clap::{ Parser, Subcommand};
 use syn::spanned::Spanned;
 use syn::Error;
 use std::fs;
@@ -6,30 +5,8 @@ use std::path::Path;
 use syn::{ parse_file, Attribute, Item};
 use walkdir::WalkDir;
 
-#[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
-struct Cli {
-    #[clap(subcommand)]
-    command: Option<Commands>,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    /// Finds structs with derived Debug trait in the current Rust project
-    Finddebugstructs,
-}
-
 fn main() {
-    let cli = Cli::parse();
-
-    match &cli.command {
-        Some(Commands::Finddebugstructs) => {
-            find_debug_structs_in_project();
-        }
-        None => {
-            println!("No subcommand was used. Use 'cargo finddebugstructs --help' for usage information.");
-        }
-    }
+    find_debug_structs_in_project();
 }
 
 fn find_debug_structs_in_project() {

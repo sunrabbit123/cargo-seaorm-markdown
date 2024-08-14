@@ -6,6 +6,5 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
-clap = { version = "4.5.15", features = ["derive"] }
 syn = { version = "2.0.74", features = ["full", "extra-traits"] }
 walkdir = "2.5.0"
