@@ -15,21 +15,25 @@ fn find_debug_structs_in_project() {
 
     for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
-        if path.is_file() && path.extension().map_or(false, |ext| ext == "rs") {
-            match find_debug_structs_in_file(path) {
-                Ok(structs) => {
-                    if !structs.is_empty() {
-                        println!("File: {:?}", path);
-                        for struct_name in structs {
-                            println!("  - {}", struct_name);
-                            total_debug_structs += 1;
-                        }
-                        println!();
-                    }
-                    file_count += 1;
+        if !path.is_file() || path.extension().map_or(true, |ext| ext != "rs") {
+            continue;
+        }
+
+        match find_debug_structs_in_file(path) {
+            Ok(structs) => {
+                file_count += 1;
+                if structs.is_empty() {
+                    continue;
                 }
-                Err(e) => eprintln!("Error processing file {:?}: {}", path, e),
+
+                println!("File: {:?}", path);
+                for struct_name in structs {
+                    println!("  - {}", struct_name);
+                    total_debug_structs += 1;
+                }
+                println!();
             }
+            Err(e) => eprintln!("Error processing file {:?}: {}", path, e),
         }
     }
 
