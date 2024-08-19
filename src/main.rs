@@ -6,11 +6,10 @@ use syn::{ parse_file, Attribute, Item};
 use walkdir::WalkDir;
 
 fn main() {
-    find_debug_structs_in_project();
+    find_sea_orm_entities_in_project();
 }
-
-fn find_debug_structs_in_project() {
-    let mut total_debug_structs = 0;
+fn find_sea_orm_entities_in_project() {
+    let mut total_sea_orm_entities = 0;
     let mut file_count = 0;
 
     for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
@@ -19,37 +18,37 @@ fn find_debug_structs_in_project() {
             continue;
         }
 
-        match find_debug_structs_in_file(path) {
-            Ok(structs) => {
+        match find_sea_orm_entities_in_file(path) {
+            Ok(entities) => {
                 file_count += 1;
-                if structs.is_empty() {
+                if entities.is_empty() {
                     continue;
                 }
 
-                println!("File: {:?}", path);
-                for struct_name in structs {
-                    println!("  - {}", struct_name);
-                    total_debug_structs += 1;
+                println!("파일: {:?}", path);
+                for entity_name in entities {
+                    println!("  - {}", entity_name);
+                    total_sea_orm_entities += 1;
                 }
                 println!();
             }
-            Err(e) => eprintln!("Error processing file {:?}: {}", path, e),
+            Err(e) => eprintln!("파일 처리 중 오류 발생 {:?}: {}", path, e),
         }
     }
 
-    println!("Project analysis result:");
-    println!("Number of Rust files analyzed: {}", file_count);
-    println!("Total number of structs with derived Debug trait: {}", total_debug_structs);
+    println!("프로젝트 분석 결과:");
+    println!("분석된 Rust 파일 수: {}", file_count);
+    println!("Sea-ORM Entity 총 개수: {}", total_sea_orm_entities);
 }
 
-fn find_debug_structs_in_file(file_path: &Path) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+fn find_sea_orm_entities_in_file(file_path: &Path) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(file_path)?;
     let syntax = parse_file(&content)?;
 
-    let debug_structs = syntax.items.iter()
+    let sea_orm_entities = syntax.items.iter()
         .filter_map(|item| {
             if let Item::Struct(item_struct) = item {
-                if item_struct.attrs.iter().any(has_debug_derive) {
+                if item_struct.attrs.iter().any(has_entity_derive) {
                     Some(item_struct.ident.to_string())
                 } else {
                     None
@@ -60,10 +59,10 @@ fn find_debug_structs_in_file(file_path: &Path) -> Result<Vec<String>, Box<dyn s
         })
         .collect();
 
-    Ok(debug_structs)
+    Ok(sea_orm_entities)
 }
 
-fn has_debug_derive(attr: &Attribute) -> bool {
+fn has_entity_derive(attr: &Attribute) -> bool {
     if !attr.path().is_ident("derive") {
         return false;
     }
@@ -76,7 +75,7 @@ fn has_debug_derive(attr: &Attribute) -> bool {
     };
 
     list.parse_nested_meta(|nested_meta|{ 
-        if nested_meta.path.is_ident("Debug") {
+        if nested_meta.path.is_ident("DeriveEntityModel") {
             Ok(())
         }  else {
             Err(Error::new(attr.meta.span(), "Expected Debug"))
