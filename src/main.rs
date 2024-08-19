@@ -31,13 +31,13 @@ fn find_sea_orm_entities_in_project() {
                     output.push_str(&format!("  - {}\n", struct_name));
                     total_structs += 1;
                 }
-                output.push_str("\n");
+                output.push('\n');
             }
             Err(e) => eprintln!("파일 처리 중 오류 발생 {:?}: {}", path, e),
         }
     }
 
-    output.push_str(&format!("프로젝트 분석 결과:\n"));
+    output.push_str("프로젝트 분석 결과:\n");
     output.push_str(&format!("분석된 Rust 파일 수: {}\n", file_count));
     output.push_str(&format!(
         "특정 속성을 가진 구조체 총 개수: {}\n",
