@@ -61,17 +61,12 @@ where
         .items
         .iter()
         .filter_map(|item| {
-            if let Item::Struct(item_struct) = item {
-                if item_struct
-                    .attrs
-                    .iter()
-                    .any(|attr| has_specific_attribute(attr, &predicate))
-                {
-                    return Some(item_struct.ident.to_string());
-                }
+            match item {
+                Item::Struct(item_struct) if item_struct.attrs.iter().any(|attr| has_specific_attribute(attr, &predicate)) => {
+                    Some(item_struct.ident.to_string())
+                },
+                _ => None,
             }
-
-            None
         })
         .collect();
 
