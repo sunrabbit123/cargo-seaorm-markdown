@@ -49,13 +49,11 @@ fn find_sea_orm_entities_in_file(file_path: &Path) -> Result<Vec<String>, Box<dy
         .filter_map(|item| {
             if let Item::Struct(item_struct) = item {
                 if item_struct.attrs.iter().any(has_entity_derive) {
-                    Some(item_struct.ident.to_string())
-                } else {
-                    None
-                }
-            } else {
-                None
+                    return Some(item_struct.ident.to_string())
+                } 
             }
+            
+            None
         })
         .collect();
 
