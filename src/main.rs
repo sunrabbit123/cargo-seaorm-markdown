@@ -1,95 +1,84 @@
-use std::fs;
-use syn::Error;
-use syn::{parse_file, Attribute, Item};
-use syn::{spanned::Spanned, Path};
-use walkdir::WalkDir;
+mod erd;
+mod file;
+mod project;
+
+use erd::Table;
+use file::read_file;
+use std::path::PathBuf;
+use syn::File;
+use syn::{Item, ItemStruct};
 
 fn main() {
-    find_sea_orm_entities_in_project();
+    let _run = run();
 }
 
-fn find_sea_orm_entities_in_project() {
-    let mut total_structs = 0;
-    let mut file_count = 0;
-    let mut output = String::new();
+fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let path_list = project::get_rust_files_path_in_project();
 
-    for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if !path.is_file() || path.extension().map_or(true, |ext| ext != "rs") {
-            continue;
-        }
+    let _process = process(path_list);
 
-        match find_structs_with_attribute(path, |p| p.is_ident("DeriveEntityModel")) {
-            Ok(structs) => {
-                file_count += 1;
-                if structs.is_empty() {
-                    continue;
-                }
+    Ok(())
+}
 
-                output.push_str(&format!("파일: {:?}\n", path));
-                for struct_name in structs {
-                    output.push_str(&format!("  - {}\n", struct_name));
-                    total_structs += 1;
-                }
-                output.push('\n');
-            }
-            Err(e) => eprintln!("파일 처리 중 오류 발생 {:?}: {}", path, e),
-        }
+fn process(path_list: Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+    let mut tables = Vec::new();
+
+	for path in path_list {
+        read_file(&path).map(|file| {
+            extract_item_struct_from_file(file)
+                .into_iter()
+                .for_each(|structure| tables.push(Table::from_item_struct(structure)))
+        })?;
     }
 
-    output.push_str("프로젝트 분석 결과:\n");
-    output.push_str(&format!("분석된 Rust 파일 수: {}\n", file_count));
-    output.push_str(&format!(
-        "특정 속성을 가진 구조체 총 개수: {}\n",
-        total_structs
-    ));
-
-    println!("{}", output);
+	Ok(())
 }
 
-fn find_structs_with_attribute<F>(
-    file_path: &std::path::Path,
-    predicate: F,
-) -> Result<Vec<String>, Box<dyn std::error::Error>>
-where
-    F: Fn(&Path) -> bool,
-{
-    let content = fs::read_to_string(file_path)?;
-    let syntax = parse_file(&content)?;
-
-    let structs = syntax
-        .items
-        .iter()
-        .filter_map(|item| {
-            match item {
-                Item::Struct(item_struct) if item_struct.attrs.iter().any(|attr| has_specific_attribute(attr, &predicate)) => {
-                    Some(item_struct.ident.to_string())
-                },
-                _ => None,
+fn extract_item_struct_from_file(file: File) -> Vec<ItemStruct> {
+    file.items
+        .into_iter()
+        .filter_map(|item| match item {
+            Item::Struct(item) => {
+                println!("{:?}", item.attrs);
+                Some(item)
             }
+            _ => None,
         })
-        .collect();
-
-    Ok(structs)
+        .collect()
 }
 
-fn has_specific_attribute<F>(attr: &Attribute, predicate: F) -> bool
-where
-    F: Fn(&Path) -> bool,
-{
-    let meta = attr.meta.clone();
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use syn::parse_quote;
 
-    let list = match meta {
-        syn::Meta::List(list) => list,
-        _ => return false,
-    };
+    #[test]
+    fn test_extract_item_struct_from_file() {
+        let file: File = parse_quote! {
+            /// @type string
+            /// minitems 1
+			#[sea_orm(table_name = "cake")]
+            struct Struct1;
 
-    list.parse_nested_meta(|nested_meta| {
-        if predicate(&nested_meta.path) {
-            Ok(())
-        } else {
-            Err(Error::new(attr.meta.span(), "Expected specific attribute"))
-        }
-    })
-    .is_ok()
+            fn some_function() {}
+
+            /**
+             * @namespace abc
+             */
+             #[sea_orm(table_name = "cake")]
+            struct Struct2 {
+                field: i32,
+            }
+            enum SomeEnum {
+                Variant1,
+                Variant2,
+            }
+        };
+
+        let result = extract_item_struct_from_file(file);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].ident, "Struct1");
+        assert_eq!(result[1].ident, "Struct2");
+    }
 }
