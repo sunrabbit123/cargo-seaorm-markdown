@@ -2,20 +2,48 @@ mod erd;
 mod file;
 mod project;
 
+use clap::Parser;
 use erd::Table;
 use file::read_file;
 use std::path::PathBuf;
 use syn::File;
 use syn::{Item, ItemStruct};
 
+
+
 fn main() {
-    let _run = run();
+	let args = Args::parse();
+	match &args.command {
+		Command::SeaormMarkdown(args) => run(args),
+	};
 }
 
-fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let path_list = project::get_rust_files_path_in_project();
 
-    let _process = process(path_list);
+/// The command line interface for setting up a Bottlerocket TestSys cluster and running tests.
+#[derive(Debug, Parser)]
+#[clap(author, version, about)]
+struct Args {
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Parser)]
+enum Command {
+    SeaormMarkdown(SeaormMarkdownArgs),
+}
+
+#[derive(Debug,Parser)]
+#[clap(author, version, about)]
+struct SeaormMarkdownArgs {
+	#[clap(long="project-root", short = 'r')]
+	project_root: Option<String>,
+}
+
+fn run(args: &SeaormMarkdownArgs ) -> Result<(), Box<dyn std::error::Error>> {
+    let path_list = project::get_rust_files_path_in_project(args.project_root.as_deref());
+
+	println!("{:?}", path_list);
+    //let _process = process(path_list);
 
     Ok(())
 }

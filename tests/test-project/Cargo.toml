@@ -1,0 +1,9 @@
+[package]
+name = "test-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sea-orm = { version = "1.0.0-rc.5", features = [ "sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
+tokio = "1.39.2"
+
