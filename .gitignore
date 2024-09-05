@@ -1,2 +1,4 @@
 target/**/*
 tests/**/target/**/*
+
+.test.md
