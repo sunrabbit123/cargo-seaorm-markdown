@@ -9,11 +9,13 @@ use std::path::PathBuf;
 use syn::File;
 use syn::{Item, ItemStruct};
 
+use crate::file::extract_schemes_from_file;
+
 
 
 fn main() {
 	let args = Args::parse();
-	match &args.command {
+	let _ = match &args.command {
 		Command::SeaormMarkdown(args) => run(args),
 	};
 }
@@ -42,38 +44,17 @@ struct SeaormMarkdownArgs {
 fn run(args: &SeaormMarkdownArgs ) -> Result<(), Box<dyn std::error::Error>> {
     let path_list = project::get_rust_files_path_in_project(args.project_root.as_deref());
 
-	println!("{:?}", path_list);
-    //let _process = process(path_list);
+    let _process = extract_schemes_from_file(path_list);
 
+	println!("```mermaid
+    erdiagram
+    
+    {:?}
+    ```", path_list);
     Ok(())
 }
 
-fn process(path_list: Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
-    let mut tables = Vec::new();
 
-	for path in path_list {
-        read_file(&path).map(|file| {
-            extract_item_struct_from_file(file)
-                .into_iter()
-                .for_each(|structure| tables.push(Table::from_item_struct(structure)))
-        })?;
-    }
-
-	Ok(())
-}
-
-fn extract_item_struct_from_file(file: File) -> Vec<ItemStruct> {
-    file.items
-        .into_iter()
-        .filter_map(|item| match item {
-            Item::Struct(item) => {
-                println!("{:?}", item.attrs);
-                Some(item)
-            }
-            _ => None,
-        })
-        .collect()
-}
 
 #[cfg(test)]
 mod tests {

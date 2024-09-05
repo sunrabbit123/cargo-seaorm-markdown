@@ -38,6 +38,22 @@ impl fmt::Debug for Column {
 }
 
 impl Table {
+//     pub fn to_mermaid_erd_text(&self, f: &mut fmt::Formatter) -> String {
+//         write!(
+//             f,
+//             "
+// \"{:?}\" {
+//             ", self.name
+//         );
+//         self.columns.iter().for_each(|column| {
+//             write!(
+//                 f,
+//                 "
+//             {} {} {} {}
+//                 ", column.data_type, column.name, column.flag, column.nullable
+//             )
+//         })
+//     }
     pub fn from_item_struct(item: ItemStruct) -> Table {
         use std::collections::HashMap;
 
