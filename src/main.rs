@@ -45,7 +45,7 @@ fn run(args: &SeaormMarkdownArgs ) -> Result<(), Box<dyn std::error::Error>> {
     let msg = format!("# {title}
 
 ```mermaid
-erdiagram
+erDiagram
 
 {table_list}
 ```
